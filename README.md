@@ -1,4 +1,4 @@
 ### Login & Registration System
 
-A login and registration system created with PHP
+A login and registration system developed with PHP
 
