@@ -28,4 +28,53 @@ function token_generator() {
     return $token;
 }
 
+/***** Validation Functions ******/
+
+function validate_user_registration() {
+
+    $errors = []; 
+
+    $min = 3;
+    $max = 20;
+
+    if($_SERVER['REQUEST_METHOD'] == "POST") {
+        $first_name         = clean($_POST['first_name']);
+        $last_name          = clean($_POST['last_name']);
+        $username           = clean($_POST['username']);
+        $email              = clean($_POST['email']);
+        $password           = clean($_POST['password']);
+        $confirm_password   = clean($_POST['confirm_password']);
+
+        if(strlen($first_name) < $min) {
+            $errors[] = "First Name cannot be less than {$min} characters";
+        }
+
+        if(strlen($first_name) > $max) {
+            $errors[] = "First Name cannot be more than {$max} characters";
+        }
+
+        if(strlen($last_name) < $min) {
+            $errors[] = "Last Name cannot be less than {$min} characters";
+        }
+
+        if(strlen($last_name) > $max) {
+            $errors[] = "Last Name cannot be more than {$max} characters";
+        }
+
+        if(strlen($username) < $min) {
+            $errors[] = "Username cannot be less than {$min} characters";
+        }
+
+        if(strlen($username) > $max) {
+            $errors[] = "Username cannot be more than {$max} characters";
+        }
+
+        if (!empty($errors)) {
+            foreach($errors as $error) {
+                echo $error;
+            }
+        }
+    }
+}
+
 ?>
