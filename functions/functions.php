@@ -28,6 +28,43 @@ function token_generator() {
     return $token;
 }
 
+function validation_error($error) {
+    $message = <<<DELIMITER
+                
+    <div class="alert alert-danger alert-dismissible" role="alert">
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <strong>$error</strong>
+    </div>
+    
+    DELIMITER;
+
+    return $message;
+}
+
+function email_exists($email) {
+    $sql = "SELECT id FROM users WHERE email = '$email'";
+
+    $result = query($sql);
+
+    if (row_count($result) == 1) {
+        return true;
+    }
+
+    return false;
+}
+
+function username_exists($username) {
+    $sql = "SELECT id FROM users WHERE username = '$username'";
+
+    $result = query($sql);
+
+    if (row_count($result) == 1) {
+        return true;
+    }
+
+    return false;
+}
+
 /***** Validation Functions ******/
 
 function validate_user_registration() {
@@ -69,9 +106,21 @@ function validate_user_registration() {
             $errors[] = "Username cannot be more than {$max} characters";
         }
 
+        if ($password !== $confirm_password) {
+            $errors[] = "Your password fields do not match";
+        }
+
+        if (email_exists($email)) {
+            $errors[] = "Sorry that email is already registered";
+        }
+
+        if (username_exists($username)) {
+            $errors[] = "Sorry that username is already taken";
+        }
+
         if (!empty($errors)) {
             foreach($errors as $error) {
-                echo $error;
+                echo validation_error($error);
             }
         }
     }
