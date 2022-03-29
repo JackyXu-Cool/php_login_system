@@ -122,8 +122,34 @@ function validate_user_registration() {
             foreach($errors as $error) {
                 echo validation_error($error);
             }
+        } else {
+            if (register_user($first_name, $last_name, $username, $email, $password)) {
+                echo "user registered";
+            }
         }
     }
 }
+
+function register_user($first_name, $last_name, $username, $email, $password) {
+
+    $first_name    = escape($first_name);
+    $last_name     = escape($last_name);
+    $username      = escape($username);
+    $email         = escape($email);
+    $password      = escape($password);
+
+    $password = md5($password);
+
+    $validation_code = md5($username.microtime());
+
+    $sql = "INSERT INTO users(first_name, last_name, username, email, password, validation_code, active)";
+    $sql.= " VALUES('$first_name','$last_name','$username', '$email','$password', '$validation_code', 0)";
+    $result = query($sql);
+    confirm($result);
+
+    return true;
+
+}
+
 
 ?>
