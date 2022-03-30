@@ -16,7 +16,7 @@ function set_message($message) {
     }
 }
 
-function display_message($message) {
+function display_message() {
     if (isset($_SESSION['message'])) {
         echo $_SESSION['message'];
         unset($_SESSION['message']);
@@ -63,6 +63,10 @@ function username_exists($username) {
     }
 
     return false;
+}
+
+function send_email($email, $subject, $msg, $headers) {
+    return mail($email, $subject, $message, $headers);
 }
 
 /***** Validation Functions ******/
@@ -124,11 +128,20 @@ function validate_user_registration() {
             }
         } else {
             if (register_user($first_name, $last_name, $username, $email, $password)) {
-                echo "user registered";
+                set_message("<p class='bg-success text-center'> Please check your email or spam folder validation link </p>");
+                redirect("index.php");
+            } else {
+                // Temporarily, this else statemnt will never be executed.
+
+                set_message("<p class='bg-danger text-center'> Sorry we are not able to register the user </p>");
+                redirect("index.php");
             }
         }
     }
 }
+
+
+/***** Register Users ******/
 
 function register_user($first_name, $last_name, $username, $email, $password) {
 
@@ -147,8 +160,47 @@ function register_user($first_name, $last_name, $username, $email, $password) {
     $result = query($sql);
     confirm($result);
 
+    $subject = "Activate your account";
+    $msg = "
+        Please click the link below to activate your account
+        http://localhost/login/activate.php?email=$email&code=$validation_code
+    ";
+    $headers = "From: noreply@junqi.net";
+
+    send_email($email, $subject, $msg, $headers);
+
     return true;
 
+}
+
+
+/***** Activate User Function ******/
+function activate_user() {
+    if ($_SERVER['REQUEST_METHOD'] == "GET") {
+        if (isset($_GET['email']) && isset($_GET['code'])) {
+            $email = clean($_GET['email']);
+            $validation_code = clean($_GET['code']);
+
+            // email = " OR 1 = 1 --"
+            $check_user_sql = "SELECT id from users WHERE email = '".escape($_GET['email'])."' AND validation_code = '".escape($_GET['code'])."'";
+            $result = query($check_user_sql);
+            confirm($result);
+
+            if (row_count($result) == 1) {
+                $update_activate_status_sql = "UPDATE users SET active = 1, validation_code = 0 WHERE email = '".escape($email)."'";
+                $result2 = query($update_activate_status_sql);
+                confirm($result2);
+
+                set_message("<p class='bg-success'> Your account has been activated. Please log in </p>");
+
+                redirect("login.php");
+            } else {
+                set_message("<p class='bg-danger'> Sorry, your account cannot be activated</p>");
+
+                redirect("login.php");
+            }
+        }
+    }
 }
 
 
