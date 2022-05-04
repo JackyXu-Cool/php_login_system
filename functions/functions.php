@@ -66,7 +66,7 @@ function username_exists($username) {
 }
 
 function send_email($email, $subject, $msg, $headers) {
-    return mail($email, $subject, $message, $headers);
+    return mail($email, $subject, $msg, $headers);
 }
 
 /***** Validation Functions ******/
@@ -272,6 +272,73 @@ function logged_in() {
         return true;
     } else {
         return false;
+    }
+}
+
+/***** Recover password ******/
+function recover_password() {
+    if($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (isset($_SESSION['token']) && $_POST['token'] === $_SESSION['token']) {
+            $email = clean($_POST['email']);
+
+            if (email_exists($email)) {
+                $validation_code = md5($email.microtime());
+
+                $subject = "please reset your password";
+                $message = "
+                    Here is your reset code {$validation_code}.
+                    Click here to reset your password http://localhost/login/code.php?email={$email}
+                ";
+
+                $headers = "From: nonreply@junqi.net";
+
+                setcookie('temp_access_code', $validation_code, time() + 120);
+
+                $sql = "UPDATE users SET validation_code = '".escape($validation_code)."' WHERE email = '".escape($email)."'";
+                $result = query($sql);
+                confirm($result);
+
+                if (!send_email($email, $subject, $message, $headers)) {
+                    echo validation_error("Email cannot be sent");
+                }
+
+                set_message("<p class='bg-success text-center'>Please check your email or spam folder for a password reset code</p>");
+
+                redirect("index.php");
+
+            } else {
+                echo validation_error("This email does not exist");
+            }
+        }
+    }
+}
+
+/*** Code Validation *******/
+function validate_code() {
+    if (isset($_COOKIE['temp_access_code'])) {
+        if (!isset($_GET['email']) || empty($_GET['email'])) {
+            redirect("index.php");
+        } else {
+            if (isset($_POST['code'])) {
+                $validation_code = clean($_POST['code']);
+                $email = clean($_GET['email']);
+
+                $sql = "SELECT id FROM users WHERE validation_code = '".escape($validation_code)."' AND email = '".escape($email)."'";
+                $result = query($sql);
+                confirm($result);
+
+                if (row_count($result) === 1) {
+                    redirect("reset.php");
+                } else {
+                    echo validation_error("Sorry, wrong validation code");
+                }
+            }
+        }
+
+    } else {
+        set_message("<p class='bg-danger text-center'>Sorry your validation cookie was expired</p>");
+
+        redirect("recover.php");
     }
 }
 
